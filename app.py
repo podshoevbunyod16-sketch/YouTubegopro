@@ -147,7 +147,7 @@ def exec_custom_command(cmd, args):
             "model": current_model,
             "messages": contents,
             "temperature": 0.7,
-            "max_tokens": 1000,
+            "max_tokens": 60000,
         }
         try:
             resp = requests.post(provider["url"], json=payload, headers=provider["headers"])
@@ -239,7 +239,7 @@ def send():
         "model": current_model,
         "messages": contents,
         "temperature": 0.7,
-        "max_tokens": 1000,
+        "max_tokens": 60000,
     }
     try:
         resp = requests.post(provider["url"], json=payload, headers=provider["headers"])
@@ -394,7 +394,7 @@ def handle_command():
         else:
             contents.append({"role": "user", "content": search_query})
         provider = PROVIDERS[current_provider]
-        payload = {"model": current_model, "messages": contents, "temperature": 0.7, "max_tokens": 1000}
+        payload = {"model": current_model, "messages": contents, "temperature": 0.7, "max_tokens": 60000}
         try:
             resp = requests.post(provider["url"], json=payload, headers=provider["headers"])
             resp.raise_for_status()
