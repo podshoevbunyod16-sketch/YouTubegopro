@@ -12,7 +12,7 @@ def run(args):
             return "Укажите город: /services weather Moscow"
         city = " ".join(params)
         try:
-            r = requests.get(f"https://wttr.in/{city}?format=3&lang=ru")
+            r = requests.get(f"https://www.gismeteo.ru/{city}?format=3&lang=ru")
             return r.text
         except Exception as e:
             return f"Ошибка погоды: {e}"
