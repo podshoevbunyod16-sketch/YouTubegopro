@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant — Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0b0b14;
+            --bg-primary: #12121f;
+            --bg-secondary: #1a1a2e;
+            --glass: rgba(255,255,255,0.04);
+            --glass-border: rgba(255,255,255,0.08);
+            --text-primary: #f0f0ff;
+            --text-secondary: #8b8db0;
+            --text-muted: #6b6d8b;
+            --accent: #a855f7;
+            --accent-glow: rgba(168,85,247,0.3);
+            --accent-hover: #9333ea;
+            --border: rgba(255,255,255,0.08);
+            --error-bg: rgba(239,68,68,0.1);
+            --error-text: #fca5a5;
+            --success-bg: rgba(34,197,94,0.1);
+            --success-text: #86efac;
+            --radius-sm: 10px;
+            --radius-md: 16px;
+            --radius-lg: 20px;
+            --radius-xl: 24px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+        .bg-mesh {
+            position: fixed; inset: 0; z-index: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 40%, rgba(123,47,247,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 60%, rgba(168,85,247,0.08) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 30% at 50% 100%, rgba(249,115,22,0.06) 0%, transparent 50%);
+            animation: meshMove 20s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+        @keyframes meshMove {
+            0% { transform: translate(0,0) scale(1); }
+            50% { transform: translate(-2%,2%) scale(1.05); }
+            100% { transform: translate(2%,-1%) scale(0.97); }
+        }
+
+        /* Login Screen */
+        .login-screen {
+            position: fixed; inset: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(11,11,20,0.95);
+            backdrop-filter: blur(20px);
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .login-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .login-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 40px 36px;
+            width: 100%; max-width: 420px;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+            animation: cardAppear 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
+        }
+        @keyframes cardAppear {
+            from { opacity: 0; transform: translateY(20px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .login-logo {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, #7b2ff7, #a855f7);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+        .login-logo svg { width: 24px; height: 24px; color: white; }
+        .login-title { font-size: 1.4rem; font-weight: 700; text-align: center; margin-bottom: 6px; }
+        .login-subtitle { font-size: 0.85rem; color: var(--text-secondary); text-align: center; margin-bottom: 28px; }
+        .field-group { margin-bottom: 16px; }
+        .field-group label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+        .field-group input {
+            width: 100%; padding: 12px 16px;
+            background: var(--bg-deep);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 0.95rem; font-family: inherit;
+            outline: none; transition: all 0.25s;
+        }
+        .field-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(168,85,247,0.12);
+        }
+        .login-btn {
+            width: 100%; padding: 12px;
+            background: linear-gradient(135deg, #7b2ff7, #a855f7);
+            border: none; border-radius: var(--radius-sm);
+            color: white; font-size: 0.95rem; font-weight: 600;
+            font-family: inherit; cursor: pointer;
+            transition: all 0.25s;
+            box-shadow: 0 4px 16px rgba(123,47,247,0.3);
+            margin-top: 8px;
+        }
+        .login-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(123,47,247,0.45); }
+        .login-btn:active { transform: translateY(0); }
+        .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .login-error {
+            background: var(--error-bg); color: var(--error-text);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-size: 0.85rem; font-weight: 500;
+            margin-top: 14px; display: none;
+        }
+        .login-error.visible { display: block; animation: shake 0.4s ease; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+        .login-hint {
+            text-align: center; font-size: 0.75rem; color: var(--text-muted);
+            margin-top: 16px;
+        }
+        .login-hint code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(168,85,247,0.12);
+            color: var(--accent);
+            padding: 2px 6px; border-radius: 4px;
+            font-size: 0.7rem;
+        }
+
+        /* Dashboard */
+        .dashboard { display: none; position: relative; z-index: 1; }
+        .dashboard.visible { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .dash-header {
+            background: rgba(18,18,31,0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 28px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .dash-header-left { display: flex; align-items: center; gap: 12px; }
+        .dash-header-logo {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, #7b2ff7, #a855f7);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+        .dash-header-logo svg { width: 20px; height: 20px; color: white; }
+        .dash-header-title { font-size: 1.1rem; font-weight: 700; }
+        .dash-header-sub { font-size: 0.75rem; color: var(--text-secondary); }
+        .dash-header-actions { display: flex; gap: 10px; align-items: center; }
+        .dash-btn {
+            background: var(--glass); border: 1px solid var(--glass-border);
+            color: var(--text-secondary); padding: 8px 16px;
+            border-radius: 100px; font-size: 0.82rem; font-weight: 500;
+            font-family: inherit; cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 6px;
+            text-decoration: none;
+        }
+        .dash-btn:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); border-color: rgba(255,255,255,0.15); }
+        .dash-btn.danger:hover { background: rgba(239,68,68,0.12); color: var(--error-text); border-color: rgba(239,68,68,0.25); }
+        .dash-btn svg { width: 14px; height: 14px; }
+        .user-badge {
+            background: rgba(168,85,247,0.12); color: var(--accent);
+            padding: 6px 14px; border-radius: 100px;
+            font-size: 0.78rem; font-weight: 600;
+            border: 1px solid rgba(168,85,247,0.2);
+        }
+
+        .dash-content {
+            max-width: 1200px; margin: 0 auto;
+            padding: 28px;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 28px;
+        }
+        @media (max-width: 960px) {
+            .dash-content { grid-template-columns: 1fr; }
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .sidebar-link {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 16px; border-radius: var(--radius-sm);
+            color: var(--text-secondary); font-size: 0.88rem; font-weight: 500;
+            cursor: pointer; transition: all 0.2s;
+            border: 1px solid transparent;
+            text-decoration: none;
+        }
+        .sidebar-link:hover { background: var(--glass); color: var(--text-primary); }
+        .sidebar-link.active { background: rgba(168,85,247,0.12); color: var(--accent); border-color: rgba(168,85,247,0.2); }
+        .sidebar-link svg { width: 16px; height: 16px; }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 1rem; font-weight: 600;
+            margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+        }
+        .card-title svg { width: 18px; height: 18px; color: var(--accent); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .stat-box {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            backdrop-filter: blur(10px);
+        }
+        .stat-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+        .stat-value { font-size: 1.4rem; font-weight: 700; color: var(--text-primary); }
+        .stat-sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; }
+
+        .setting-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 0; border-bottom: 1px solid var(--glass-border);
+        }
+        .setting-row:last-child { border-bottom: none; }
+        .setting-info { flex: 1; }
+        .setting-name { font-size: 0.9rem; font-weight: 500; color: var(--text-primary); }
+        .setting-desc { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+        .setting-control input[type="text"], .setting-control select, .setting-control textarea {
+            background: var(--bg-deep); border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm); color: var(--text-primary);
+            padding: 8px 12px; font-family: inherit; font-size: 0.85rem;
+            outline: none; min-width: 200px;
+        }
+        .setting-control input:focus, .setting-control select:focus, .setting-control textarea:focus {
+            border-color: var(--accent); box-shadow: 0 0 0 3px rgba(168,85,247,0.1);
+        }
+        .setting-control textarea { width: 100%; min-height: 80px; resize: vertical; }
+        .toggle-switch {
+            width: 44px; height: 24px;
+            background: var(--glass-border);
+            border-radius: 100px;
+            position: relative;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .toggle-switch.on { background: var(--accent); }
+        .toggle-switch::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 20px; height: 20px;
+            background: white; border-radius: 50%;
+            transition: all 0.3s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .toggle-switch.on::after { left: 22px; }
+
+        .list-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+        }
+        .list-item-name { font-weight: 500; color: var(--text-primary); }
+        .list-item-type { font-size: 0.72rem; color: var(--text-muted); background: rgba(168,85,247,0.1); padding: 2px 8px; border-radius: 100px; }
+
+        .action-bar {
+            display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 18px; border-radius: var(--radius-sm);
+            font-family: inherit; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; border: none;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #7b2ff7, #a855f7);
+            color: white; box-shadow: 0 4px 14px rgba(123,47,247,0.3);
+        }
+        .btn-primary:hover { box-shadow: 0 6px 24px rgba(123,47,247,0.45); transform: translateY(-1px); }
+        .btn-secondary { background: var(--glass); color: var(--text-secondary); border: 1px solid var(--glass-border); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+        .btn-danger { background: var(--error-bg); color: var(--error-text); border: 1px solid rgba(239,68,68,0.2); }
+        .btn-danger:hover { background: rgba(239,68,68,0.2); }
+        .btn svg { width: 14px; height: 14px; }
+
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 200;
+            padding: 12px 20px; border-radius: var(--radius-sm);
+            font-size: 0.88rem; font-weight: 500;
+            backdrop-filter: blur(20px);
+            animation: toastIn 0.3s ease;
+            display: none;
+        }
+        .toast.visible { display: block; }
+        .toast.success { background: var(--success-bg); color: var(--success-text); border: 1px solid rgba(34,197,94,0.2); }
+        .toast.error { background: var(--error-bg); color: var(--error-text); border: 1px solid rgba(239,68,68,0.2); }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .panel { display: none; }
+        .panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+        pre.json-view {
+            background: var(--bg-deep); border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm); padding: 14px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+            color: var(--text-secondary); overflow-x: auto; max-height: 400px; overflow-y: auto;
+        }
+
+        @media (max-width: 640px) {
+            .login-card { padding: 28px 24px; margin: 16px; }
+            .dash-content { padding: 16px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .dash-header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+            .dash-header-actions { width: 100%; justify-content: flex-end; }
+            .dash-btn span { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-mesh"></div>
+
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <div class="login-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1 5 5 0 0 0-5 5v1.5a2.5 2.5 0 0 1-2.5 2.5 1 1 0 0 0 0 2 2.5 2.5 0 0 1 2.5 2.5V19a5 5 0 0 0 5 5 1 1 0 0 1 1 1v2a1 1 0 0 1-1 1 8 8 0 0 1-8-8v-1.5a2.5 2.5 0 0 1-2.5-2.5 1 1 0 0 0 0-2 2.5 2.5 0 0 1 2.5-2.5V8a8 8 0 0 1 8-8z"/><path d="M16 9a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1 3 3 0 0 0-3 3v1.5a1.5 1.5 0 0 1-1.5 1.5 1 1 0 0 0 0 2 1.5 1.5 0 0 1 1.5 1.5V19a3 3 0 0 0 3 3 1 1 0 0 1 1 1v2a1 1 0 0 1-1 1 5 5 0 0 1-5-5v-1.5a1.5 1.5 0 0 1-1.5-1.5 1 1 0 0 0 0-2 1.5 1.5 0 0 1 1.5-1.5V14a5 5 0 0 1 5-5z"/></svg>
+            </div>
+            <div class="login-title">Админ-панель</div>
+            <div class="login-subtitle">Вход в управление AI Assistant</div>
+            <div class="field-group">
+                <label for="loginUser">Логин</label>
+                <input type="text" id="loginUser" placeholder="admin или user" autocomplete="username">
+            </div>
+            <div class="field-group">
+                <label for="loginCode">Код доступа</label>
+                <input type="password" id="loginCode" placeholder="Введите код" autocomplete="current-password">
+            </div>
+            <button class="login-btn" id="loginBtn" onclick="doLogin()">Войти</button>
+            <div class="login-error" id="loginError"></div>
+            <div class="login-hint">
+                Код по умолчанию: admin — <code>admin123</code>, user — <code>user123</code><br>
+                Настройте в <code>.env</code>: <code>ADMIN_CODE</code>, <code>USER_CODE</code>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard" id="dashboard">
+        <div class="dash-header">
+            <div class="dash-header-left">
+                <div class="dash-header-logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1 5 5 0 0 0-5 5v1.5a2.5 2.5 0 0 1-2.5 2.5 1 1 0 0 0 0 2 2.5 2.5 0 0 1 2.5 2.5V19a5 5 0 0 0 5 5 1 1 0 0 1 1 1v2a1 1 0 0 1-1 1 8 8 0 0 1-8-8v-1.5a2.5 2.5 0 0 1-2.5-2.5 1 1 0 0 0 0-2 2.5 2.5 0 0 1 2.5-2.5V8a8 8 0 0 1 8-8z"/><path d="M16 9a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1 3 3 0 0 0-3 3v1.5a1.5 1.5 0 0 1-1.5 1.5 1 1 0 0 0 0 2 1.5 1.5 0 0 1 1.5 1.5V19a3 3 0 0 0 3 3 1 1 0 0 1 1 1v2a1 1 0 0 1-1 1 5 5 0 0 1-5-5v-1.5a1.5 1.5 0 0 1-1.5-1.5 1 1 0 0 0 0-2 1.5 1.5 0 0 1 1.5-1.5V14a5 5 0 0 1 5-5z"/></svg>
+                </div>
+                <div>
+                    <div class="dash-header-title">AI Assistant</div>
+                    <div class="dash-header-sub">Панель управления</div>
+                </div>
+            </div>
+            <div class="dash-header-actions">
+                <span class="user-badge" id="userBadge">admin</span>
+                <a href="/" class="dash-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <span>Чат</span>
+                </a>
+                <button class="dash-btn danger" onclick="doLogout()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                    <span>Выйти</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="dash-content">
+            <div class="sidebar">
+                <div class="sidebar-link active" onclick="showPanel('overview')" data-panel="overview">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                    Обзор
+                </div>
+                <div class="sidebar-link" onclick="showPanel('settings')" data-panel="settings">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Настройки
+                </div>
+                <div class="sidebar-link" onclick="showPanel('history')" data-panel="history">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    История
+                </div>
+                <div class="sidebar-link" onclick="showPanel('plugins')" data-panel="plugins">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 2-10 12.5"/><path d="m13 22-10-12.5"/><path d="m22 2-10 12.5"/><path d="m22 22-10-12.5"/></svg>
+                    Плагины и команды
+                </div>
+                <div class="sidebar-link" onclick="showPanel('export')" data-panel="export">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    Экспорт
+                </div>
+            </div>
+
+            <div class="main">
+                <!-- Overview -->
+                <div class="panel active" id="panel-overview">
+                    <div class="card">
+                        <div class="card-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                            Статистика
+                        </div>
+                        <div class="stats-grid" id="statsGrid">
+                            <div class="stat-box">
+                                <div class="stat-label">Сообщений</div>
+                                <div class="stat-value" id="statMessages">—</div>
+                                <div class="stat-sub">в истории чата</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Модель</div>
+                                <div class="stat-value" id="statModel">—</div>
+                                <div class="stat-sub" id="statProvider">—</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Плагины</div>
+                                <div class="stat-value" id="statPlugins">—</div>
+                                <div class="stat-sub">загружено</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Команды</div>
+                                <div class="stat-value" id="statCommands">—</div>
+                                <div class="stat-sub">пользовательских</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1 5 5 0 0 0-5 5v1.5a2.5 2.5 0 0 1-2.5 2.5 1 1 0 0 0 0 2 2.5 2.5 0 0 1 2.5 2.5V19a5 5 0 0 0 5 5 1 1 0 0 1 1 1v2a1 1 0 0 1-1 1 8 8 0 0 1-8-8v-1.5a2.5 2.5 0 0 1-2.5-2.5 1 1 0 0 0 0-2 2.5 2.5 0 0 1 2.5-2.5V8a8 8 0 0 1 8-8z"/><path d="M16 9a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1 3 3 0 0 0-3 3v1.5a1.5 1.5 0 0 1-1.5 1.5 1 1 0 0 0 0 2 1.5 1.5 0 0 1 1.5 1.5V19a3 3 0 0 0 3 3 1 1 0 0 1 1 1v2a1 1 0 0 1-1 1 5 5 0 0 1-5-5v-1.5a1.5 1.5 0 0 1-1.5-1.5 1 1 0 0 0 0-2 1.5 1.5 0 0 1 1.5-1.5V14a5 5 0 0 1 5-5z"/></svg>
+                            Быстрые действия
+                        </div>
+                        <div class="action-bar">
+                            <button class="btn btn-danger" onclick="clearHistory()">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                Очистить историю
+                            </button>
+                            <button class="btn btn-secondary" onclick="reloadPlugins()">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                                Обновить плагины
+                            </button>
+                            <button class="btn btn-primary" onclick="saveSettings()">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                Сохранить настройки
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings -->
+                <div class="panel" id="panel-settings">
+                    <div class="card">
+                        <div class="card-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                            Настройки ассистента
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <div class="setting-name">Системный промпт</div>
+                                <div class="setting-desc">Определяет поведение ассистента</div>
+                            </div>
+                            <div class="setting-control">
+                                <textarea id="settingPrompt" placeholder="Ты полезный ассистент..."></textarea>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <div class="setting-name">Провайдер LLM</div>
+                                <div class="setting-desc">Текущий API-провайдер</div>
+                            </div>
+                            <div class="setting-control">
+                                <select id="settingProvider">
+                                    <option value="groq">Groq</option>
+                                    <option value="cerebras">Cerebras</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <div class="setting-name">Модель</div>
+                                <div class="setting-desc">Текущая языковая модель</div>
+                            </div>
+                            <div class="setting-control">
+                                <select id="settingModel"></select>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <div class="setting-name">Голосовые ответы</div>
+                                <div class="setting-desc">Озвучивать ответы бота</div>
+                            </div>
+                            <div class="setting-control">
+                                <div class="toggle-switch" id="toggleVoice" onclick="toggleSetting(this, 'voice')"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History -->
+                <div class="panel" id="panel-history">
+                    <div class="card">
+                        <div class="card-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                            История сообщений
+                        </div>
+                        <div class="action-bar">
+                            <button class="btn btn-danger" onclick="clearHistory()">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                Очистить
+                            </button>
+                        </div>
+                        <pre class="json-view" id="historyView">Загрузка...</pre>
+                    </div>
+                </div>
+
+                <!-- Plugins -->
+                <div class="panel" id="panel-plugins">
+                    <div class="card">
+                        <div class="card-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 2-10 12.5"/><path d="m13 22-10-12.5"/><path d="m22 2-10 12.5"/><path d="m22 22-10-12.5"/></svg>
+                            Плагины
+                        </div>
+                        <div id="pluginsList">Загрузка...</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+                            Пользовательские команды
+                        </div>
+                        <div id="commandsList">Загрузка...</div>
+                    </div>
+                </div>
+
+                <!-- Export -->
+                <div class="panel" id="panel-export">
+                    <div class="card">
+                        <div class="card-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                            Экспорт данных
+                        </div>
+                        <div class="action-bar">
+                            <button class="btn btn-primary" onclick="exportJSON()">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                Скачать JSON
+                            </button>
+                        </div>
+                        <pre class="json-view" id="exportView">Нажмите «Скачать JSON» для просмотра</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const loginScreen = document.getElementById('loginScreen');
+        const dashboard = document.getElementById('dashboard');
+        const loginError = document.getElementById('loginError');
+        const toast = document.getElementById('toast');
+
+        let currentStats = null;
+
+        // Check session on load
+        async function checkSession() {
+            try {
+                const r = await fetch('/api/admin/check');
+                const d = await r.json();
+                if (d.logged_in) {
+                    showDashboard(d.username, d.role);
+                    loadStats();
+                }
+            } catch(e) {}
+        }
+
+        async function doLogin() {
+            const username = document.getElementById('loginUser').value.trim();
+            const code = document.getElementById('loginCode').value.trim();
+            const btn = document.getElementById('loginBtn');
+            if (!username || !code) { showLoginError('Введите логин и код'); return; }
+            btn.disabled = true; btn.textContent = 'Вход...';
+            try {
+                const r = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, code})
+                });
+                const d = await r.json();
+                if (d.error) { showLoginError(d.error); }
+                else { showDashboard(d.username, d.role); loadStats(); }
+            } catch(e) { showLoginError('Ошибка сети'); }
+            finally { btn.disabled = false; btn.textContent = 'Войти'; }
+        }
+
+        async function doLogout() {
+            try {
+                await fetch('/api/admin/logout', {method: 'POST'});
+            } catch(e) {}
+            loginScreen.classList.remove('hidden');
+            dashboard.classList.remove('visible');
+            document.getElementById('loginCode').value = '';
+        }
+
+        function showDashboard(username, role) {
+            loginScreen.classList.add('hidden');
+            dashboard.classList.add('visible');
+            document.getElementById('userBadge').textContent = username;
+            loginError.classList.remove('visible');
+        }
+
+        function showLoginError(msg) {
+            loginError.textContent = msg;
+            loginError.classList.add('visible');
+            setTimeout(() => loginError.classList.remove('visible'), 3000);
+        }
+
+        function showToast(msg, type = 'success') {
+            toast.textContent = msg;
+            toast.className = 'toast visible ' + type;
+            setTimeout(() => toast.classList.remove('visible'), 3000);
+        }
+
+        // Panel switching
+        function showPanel(id) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            document.getElementById('panel-' + id).classList.add('active');
+            document.querySelector('.sidebar-link[data-panel="' + id + '"]').classList.add('active');
+            if (id === 'history') loadHistory();
+            if (id === 'plugins') loadPluginsPanel();
+            if (id === 'export') loadExport();
+        }
+
+        // Stats
+        async function loadStats() {
+            try {
+                const r = await fetch('/api/admin/stats');
+                const d = await r.json();
+                currentStats = d;
+                document.getElementById('statMessages').textContent = d.history_messages;
+                document.getElementById('statModel').textContent = d.current_model;
+                document.getElementById('statProvider').textContent = d.current_provider;
+                document.getElementById('statPlugins').textContent = d.plugins_loaded.length;
+                document.getElementById('statCommands').textContent = d.custom_commands.length;
+                // Fill settings
+                document.getElementById('settingPrompt').value = d.system_prompt;
+                document.getElementById('settingProvider').value = d.current_provider;
+                updateModelSelect(d.current_provider, d.current_model);
+                document.getElementById('toggleVoice').classList.toggle('on', d.voice_enabled);
+            } catch(e) { showToast('Ошибка загрузки статистики', 'error'); }
+        }
+
+        document.getElementById('settingProvider').addEventListener('change', function() {
+            updateModelSelect(this.value);
+        });
+
+        function updateModelSelect(provider, selected = null) {
+            const sel = document.getElementById('settingModel');
+            sel.innerHTML = '';
+            const models = provider === 'groq' ? [
+                'openai/gpt-oss-120b','llama-3.3-70b-versatile','meta-llama/llama-4-scout-17b-16e-instruct',
+                'qwen/qwen3-32b','llama-3.1-8b-instant','groq/compound','groq/compound-mini'
+            ] : ['llama-3.3-70b','llama-3.1-8b','qwen3-32b'];
+            const names = {
+                'openai/gpt-oss-120b': 'GPT-OSS 120B',
+                'llama-3.3-70b-versatile': 'Llama 3.3 70B',
+                'meta-llama/llama-4-scout-17b-16e-instruct': 'Llama 4 Scout',
+                'qwen/qwen3-32b': 'Qwen 3 32B',
+                'llama-3.1-8b-instant': 'Llama 3.1 8B',
+                'groq/compound': 'Compound',
+                'groq/compound-mini': 'Compound Mini',
+                'llama-3.3-70b': 'Llama 3.3 70B',
+                'llama-3.1-8b': 'Llama 3.1 8B',
+                'qwen3-32b': 'Qwen 3 32B'
+            };
+            models.forEach(m => {
+                const o = document.createElement('option');
+                o.value = m; o.textContent = names[m] || m;
+                if (m === selected) o.selected = true;
+                sel.appendChild(o);
+            });
+        }
+
+        function toggleSetting(el, name) {
+            el.classList.toggle('on');
+        }
+
+        async function saveSettings() {
+            const payload = {
+                system_prompt: document.getElementById('settingPrompt').value,
+                provider: document.getElementById('settingProvider').value,
+                model: document.getElementById('settingModel').value,
+                voice: document.getElementById('toggleVoice').classList.contains('on')
+            };
+            try {
+                const r = await fetch('/api/admin/settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const d = await r.json();
+                if (d.success) { showToast('Настройки сохранены'); loadStats(); }
+                else showToast(d.error || 'Ошибка', 'error');
+            } catch(e) { showToast('Ошибка сети', 'error'); }
+        }
+
+        async function clearHistory() {
+            if (!confirm('Очистить всю историю чата?')) return;
+            try {
+                const r = await fetch('/api/admin/history', {method: 'DELETE'});
+                const d = await r.json();
+                if (d.success) { showToast('История очищена'); loadStats(); if (document.getElementById('panel-history').classList.contains('active')) loadHistory(); }
+            } catch(e) { showToast('Ошибка', 'error'); }
+        }
+
+        async function loadHistory() {
+            try {
+                const r = await fetch('/api/admin/history');
+                const d = await r.json();
+                document.getElementById('historyView').textContent = JSON.stringify(d.history, null, 2);
+            } catch(e) { document.getElementById('historyView').textContent = 'Ошибка загрузки'; }
+        }
+
+        async function loadPluginsPanel() {
+            try {
+                const r = await fetch('/api/admin/stats');
+                const d = await r.json();
+                let html = '';
+                d.plugins_loaded.forEach(p => {
+                    html += `<div class="list-item"><span class="list-item-name">${p}</span><span class="list-item-type">плагин</span></div>`;
+                });
+                if (!d.plugins_loaded.length) html = '<div style="color:var(--text-muted);font-size:0.85rem;">Нет загруженных плагинов</div>';
+                document.getElementById('pluginsList').innerHTML = html;
+
+                let cmdHtml = '';
+                d.custom_commands.forEach(c => {
+                    cmdHtml += `<div class="list-item"><span class="list-item-name">/${c}</span><span class="list-item-type">команда</span></div>`;
+                });
+                if (!d.custom_commands.length) cmdHtml = '<div style="color:var(--text-muted);font-size:0.85rem;">Нет пользовательских команд</div>';
+                document.getElementById('commandsList').innerHTML = cmdHtml;
+            } catch(e) {}
+        }
+
+        async function loadExport() {
+            try {
+                const r = await fetch('/api/admin/export');
+                const d = await r.json();
+                document.getElementById('exportView').textContent = JSON.stringify(d, null, 2);
+            } catch(e) { document.getElementById('exportView').textContent = 'Ошибка загрузки'; }
+        }
+
+        function exportJSON() {
+            loadExport();
+            setTimeout(() => {
+                const blob = new Blob([document.getElementById('exportView').textContent], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'ai-assistant-export-' + new Date().toISOString().slice(0,10) + '.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('Экспорт сохранён');
+            }, 300);
+        }
+
+        function reloadPlugins() {
+            showToast('Перезагрузите сервер для обновления плагинов');
+        }
+
+        // Enter key on login
+        document.getElementById('loginCode').addEventListener('keypress', e => {
+            if (e.key === 'Enter') doLogin();
+        });
+
+        checkSession();
+    </script>
+</body>
+</html>
