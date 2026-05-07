@@ -1,8 +1,3 @@
-
-# Создаю исправленный app.py на основе предоставленного кода
-# Исправляю все найденные ошибки
-
-app_py_fixed = r'''import os
 import sys
 import json
 import requests
@@ -1167,12 +1162,3 @@ if __name__ == "__main__":
     print("Admin:    http://localhost:5000/admin/login")
     print("=" * 50)
     app.run(host="0.0.0.0", port=5000, debug=False)
-'''
-
-# Сохраняем
-output_path = "/mnt/agents/output/app.py"
-with open(output_path, "w", encoding="utf-8") as f:
-    f.write(app_py_fixed)
-
-print(f"✅ Исправленный app.py сохранён: {output_path}")
-print(f"Размер: {len(app_py_fixed)} символов, строк: {app_py_fixed.count(chr(10))}")
