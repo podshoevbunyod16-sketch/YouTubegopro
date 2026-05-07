@@ -1,3 +1,4 @@
+import requests
 import os
 import json
 from flask import Blueprint, request, jsonify, session
