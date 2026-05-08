@@ -57,8 +57,8 @@ PROVIDERS = {
 }
 
 # ---------- Конфиг для генерации кода (всегда Cerebras) ----------
-CODE_PROVIDER = "cerebras"
-CODE_MODEL_DEFAULT = "qwen3.6-plus-480b"
+CODE_PROVIDER = "groq"
+CODE_MODEL_DEFAULT = "openai/gpt-oss-120b"
 
 current_provider = "groq"
 current_model = "openai/gpt-oss-120b"
